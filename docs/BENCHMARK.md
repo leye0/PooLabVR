@@ -1,6 +1,8 @@
 # Snow Lab — comparaison du moteur de neige
 
-Page statique de la branche `main`, publiable par GitHub Pages avec **Settings → Pages → Deploy from a branch → main /docs**.
+Page statique de la branche `main`. Le workflow GitHub Actions `.github/workflows/deploy-pages.yml` publie exclusivement le dossier `docs/` via `actions/upload-pages-artifact` et `actions/deploy-pages`.
+
+Dans **Settings → Pages**, sélectionner **GitHub Actions** comme source de publication. Une fois ce réglage activé, chaque modification du dossier `docs/` sur `main` déclenche un déploiement automatique ; on peut aussi lancer manuellement le workflow depuis l'onglet Actions.
 
 URL après activation : `https://leye0.github.io/PooLabVR/`.
 
