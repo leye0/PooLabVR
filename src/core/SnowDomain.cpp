@@ -4,6 +4,7 @@
 #include "Assets.h"
 #include "Core.h"
 #include <array>
+#include <cstdlib>
 #include <vector>
 namespace lab {
 namespace {
@@ -25,7 +26,8 @@ struct RasterPipeline {
 }
 struct SnowDomain::Impl {
  GpuDomainServices* api{};ComPtr<ID3D12Device2> device;
- ComPtr<ID3D12PipelineState> clear,splat,composite;
+ ComPtr<ID3D12PipelineState> clear,splat,stereoSplat,composite;
+ bool stereoBatch{};
  uint32_t pipelineViews{},width{},height{},viewCount{};
  // Keep coverage and illuminated-colour selection separate: integer atomics
  // are supported on R32_UINT typed UAVs, not on packed multi-channel UAVs.
@@ -45,7 +47,11 @@ struct SnowDomain::Impl {
          D3D12_COMPUTE_PIPELINE_STATE_DESC d{};d.pRootSignature=api->BindlessRootSignature();d.CS={bytes.data(),bytes.size()};
          Hr(device->CreateComputePipelineState(&d,IID_PPV_ARGS(&pipeline)),"Snowfall compute pipeline");
      };
-     make(L"SnowClear",clear);make(L"SnowSplat",splat);sources.reserve(4);
+     make(L"SnowClear",clear);make(L"SnowSplat",splat);
+     make(L"SnowSplatStereo",stereoSplat);sources.reserve(4);
+     // Opt-in until GPU/VR diagnostics can verify occupancy and frame latency.
+     const char* selection=std::getenv("LABOVR_EXPERIMENT_STEREO_SNOW");
+     stereoBatch=selection&&selection[0]=='1'&&selection[1]=='\0';
  }
  void Pipeline(uint32_t views){
      if(pipelineViews==views)return;if(!views||views>4)Fail("Snowfall invalid view topology");
@@ -104,7 +110,8 @@ struct SnowDomain::Impl {
  }
  static void Splat(void* ptr,ID3D12GraphicsCommandList7* l){
      auto& s=*static_cast<Stage*>(ptr);s.self->Bind(l,true,s.splatParams);
-     l->SetPipelineState(s.self->splat.Get());l->Dispatch((GpuParticleFieldCount+255)/256,s.viewCount,1);
+     l->SetPipelineState(s.self->stereoBatch?s.self->stereoSplat.Get():s.self->splat.Get());
+     l->Dispatch((GpuParticleFieldCount+255)/256,s.self->stereoBatch?1:s.viewCount,1);
  }
  static void Composite(void* ptr,ID3D12GraphicsCommandList7* l){
      auto& s=*static_cast<Stage*>(ptr);s.self->Bind(l,false,s.compositeParams);

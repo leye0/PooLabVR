@@ -83,7 +83,7 @@ void PhysicsRuntime::Impl::Scene::Destroy(){
     }
     {PxScopedCudaLock lock(*runtime.cuda);DestroyPublications();Cuda(cudaStreamSynchronize(stream),"retire physics scene");
     cudaFreeHost(forceHost);cudaFreeHost(torqueHost);cudaFreeHost(editPoseHost);cudaFreeHost(editIndexHost);cudaFree(editPoseDevice);cudaFree(editIndexDevice);cudaFree(editZeroDevice);
-    if(insects)cudaFree(insects);for(auto& snow:snowfallStates)if(snow.handle)snow.Destroy(owner.interop);cudaFree(populationBodies);if(populationBodyPoses)cudaFree(populationBodyPoses);if(populationGrid)cudaFree(populationGrid);cudaFree(populationSummary);for(auto& r:populationReadbacks){cudaFreeHost(r.host);cudaEventDestroy(r.done);}
+    if(insects)cudaFree(insects);for(auto& snow:snowfallStates)if(snow.handle)snow.Destroy(owner.interop);if(snowfallWindCells)cudaFree(snowfallWindCells);cudaFree(populationBodies);if(populationBodyPoses)cudaFree(populationBodyPoses);if(populationGrid)cudaFree(populationGrid);cudaFree(populationSummary);for(auto& r:populationReadbacks){cudaFreeHost(r.host);cudaEventDestroy(r.done);}
     for(auto& p:probeSlots){cudaFreeHost(p.host);cudaFreeHost(p.overflow);cudaEventDestroy(p.done);cudaEventDestroy(p.gpuBegin);cudaEventDestroy(p.gpuEnd);}
     CollectTimings();
     if(SessionLogCompact()&&diagnostic.frames)LogPhysicsProfileGpu(diagnostic);

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080f1a">
+  <meta name="description" content="Laboratoire WebGL2 sans CUDA pour comparer les algorithmes de neige de PooLabVR, avec mesures FPS en direct.">
+  <title>PooLabVR — Snow Lab</title>
+  <link rel="stylesheet" href="./snow-lab.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <div class="logo"><span class="logo-dot"></span> PooLabVR <span class="edition">/ SNOW LAB</span></div>
+      <a href="https://github.com/leye0/PooLabVR" class="source" target="_blank" rel="noreferrer">Code source ↗</a>
+    </header>
+
+    <section class="intro">
+      <div class="eyebrow">GPU PARTICLE BENCHMARK · WEBGL2 · SANS CUDA</div>
+      <h1>Deux millions de flocons.<br><span>Moins de calculs.</span></h1>
+      <p>Un laboratoire interactif à petite résolution pour comparer les chemins de simulation et de rendu. Le nombre d'entités reste identique entre les modes.</p>
+    </section>
+
+    <section class="workspace" aria-label="Simulation de neige">
+      <div class="canvas-header">
+        <span class="live"><span class="pulse"></span> SIMULATION EN DIRECT</span>
+        <span id="renderStatus">Initialisation WebGL2…</span>
+      </div>
+      <div class="screen">
+        <canvas id="snow" width="400" height="200" aria-label="Deux projections stéréoscopiques de la neige, 200 par 200 pixels par œil"></canvas>
+        <div class="eye-labels"><span>ŒIL GAUCHE</span><span>ŒIL DROIT</span></div>
+        <div class="screen-divider" aria-hidden="true"></div>
+        <div class="hud" aria-live="off">
+          <div class="hud-title">FRAME MONITOR</div>
+          <div class="hud-reading"><b id="fps">—</b><small>FPS</small></div>
+          <div class="hud-row"><span>Image</span><strong id="frameMs">— ms</strong></div>
+          <div class="hud-row"><span>GPU</span><strong id="gpuMs">— ms</strong></div>
+          <div class="hud-row"><span>Objets</span><strong id="particleHud">—</strong></div>
+        </div>
+      </div>
+      <div class="canvas-footnote"><span id="resolutionHud">400 × 200 pixels au total · 200 × 200 / œil</span><span>Simulation continue, même hors du champ de vision</span></div>
+    </section>
+
+    <section class="controls">
+      <div class="control-title"><span>01</span> CHEMIN DE CALCUL</div>
+      <div class="modes" role="group" aria-label="Mode à tester">
+        <button class="mode active" type="button" data-mode="baseline" aria-pressed="true"><b>Original</b><small>2 passages visuels, vent par flocon</small></button>
+        <button class="mode" type="button" data-mode="stereo" aria-pressed="false"><b>Stéréo groupée</b><small>1 appel de dessin, 2 instances</small></button>
+        <button class="mode" type="button" data-mode="cells" aria-pressed="false"><b>Vent localisé</b><small>64 × 64 cellules, 32 phases</small></button>
+        <button class="mode" type="button" data-mode="combined" aria-pressed="false"><b>Combiné</b><small>Stéréo groupée + vent localisé</small></button>
+      </div>
+      <div class="control-lower">
+        <div class="density">
+          <label for="population">PARTICULES ACTIVES</label>
+          <select id="population">
+            <option value="50000">50 000</option>
+            <option value="200000">200 000</option>
+            <option value="500000">500 000</option>
+            <option value="1000000">1 000 000</option>
+            <option value="2000000">2 000 000</option>
+          </select>
+        </div>
+        <div class="density">
+          <label for="eyeResolution">RÉSOLUTION PAR ŒIL</label>
+          <select id="eyeResolution">
+            <option value="200">200 × 200 · léger</option>
+            <option value="400">400 × 400 · moyen</option>
+            <option value="800">800 × 800 · élevé</option>
+          </select>
+        </div>
+        <button class="benchmark" id="benchmark" type="button">Mesurer chaque mode · 2 s <span aria-hidden="true">→</span></button>
+      </div>
+    </section>
+
+    <section class="results" aria-label="Résultats du benchmark">
+      <div class="results-top"><div><div class="control-title"><span>02</span> COMPARAISON</div><p id="testStatus">Lance la mesure pour comparer les quatre modes sur ton appareil.</p></div><div class="result-badge" id="testBadge">EN ATTENTE</div></div>
+      <div class="table-scroll">
+        <table><thead><tr><th>MODE</th><th>FPS MOYENS</th><th>IMAGE / MS</th><th>GPU / MS*</th><th>VS ORIGINAL</th></tr></thead><tbody id="results"><tr><td colspan="5" class="empty">Aucune mesure pour le moment</td></tr></tbody></table>
+      </div>
+      <p class="disclaimer">* Quand l'extension de minuterie GPU est disponible. Le FPS mesure le navigateur réel (écran, pilotes, WebGL et synchronisation) et peut plafonner à la fréquence de rafraîchissement. Le vent mutualisé est une approximation des trajectoires, sans suppression de particules. Ce site n'exécute ni CUDA ni DirectX 12 : ses performances ne prédisent pas directement celles du moteur VR.</p>
+    </section>
+
+    <footer>Une expérience indépendante sur <a href="https://github.com/leye0/PooLabVR">le fork PooLabVR</a>. La simulation CUDA originale du moteur n'est pas remplacée par cette page.</footer>
+  </main>
+  <script src="./snow-lab.js" defer></script>
+</body>
+</html>
