@@ -71,10 +71,10 @@ uint PackSnowLight(float3 light){
     uint3 hue=(uint3)(255.f*saturate(light/max(peak,.00001f)));
     return (brightness<<24)|(hue.r<<16)|(hue.g<<8)|hue.b;
 }
-[numthreads(256,1,1)]
-void SnowSplat(uint3 id:SV_DispatchThreadID){
-    uint index=id.x,view=id.y;if(index>=SnowStateCount||view>=ViewCount)return;
-    StructuredBuffer<SnowParticle> states=ResourceDescriptorHeap[objectIndex];SnowParticle s=states[index];
+// Shared by the original per-eye dispatch and the experimental one-thread-per-
+// particle stereo dispatch. The latter reuses a single particle-state load;
+// projection and scene-depth rejection remain exact and per eye.
+void SnowSplatEye(SnowParticle s,uint view){
     float3 p=s.position.xyz;
     p.x+=floor((eye[view].x-p.x+128.f)/256.f)*256.f;
     p.z+=floor((eye[view].z-p.z+128.f)/256.f)*256.f;
@@ -107,6 +107,19 @@ void SnowSplat(uint3 id:SV_DispatchThreadID){
         if(distance<9.f&&pixel.x+1<int(w))
             InterlockedMax(illuminated[uint3(pixel+int2(1,0),view)],lit);
     }
+}
+[numthreads(256,1,1)]
+void SnowSplat(uint3 id:SV_DispatchThreadID){
+    uint index=id.x,view=id.y;if(index>=SnowStateCount||view>=ViewCount)return;
+    StructuredBuffer<SnowParticle> states=ResourceDescriptorHeap[objectIndex];
+    SnowSplatEye(states[index],view);
+}
+[numthreads(256,1,1)]
+void SnowSplatStereo(uint3 id:SV_DispatchThreadID){
+    uint index=id.x;if(index>=SnowStateCount)return;
+    StructuredBuffer<SnowParticle> states=ResourceDescriptorHeap[objectIndex];
+    SnowParticle particle=states[index];
+    [loop]for(uint view=0;view<ViewCount;view++)SnowSplatEye(particle,view);
 }
 struct SnowOut{float4 position:SV_Position;float2 uv:TEXCOORD0;nointerpolation uint view:TEXCOORD1;};
 SnowOut SnowCompositeVS(uint index:SV_VertexID,uint view:SV_ViewID){

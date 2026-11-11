@@ -165,6 +165,7 @@ struct PhysicsRuntime::Impl {
         uint32_t pendingPublicationIndex{};
         uint64_t pendingConsumerValue{};
         std::array<SharedBuffer,SnowfallRingSize> snowfallStates{};
+        GpuParticleWindSample* snowfallWindCells{};
         uint32_t snowfallCurrentSlot{};
         bool snowfallReady{};
         double snowfallPendingSeconds{},snowfallTimeSeconds{};
